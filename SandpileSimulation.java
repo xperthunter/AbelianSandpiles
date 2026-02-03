@@ -150,8 +150,8 @@ public class SandpileSimulation {
     }
 
     public static void main(String[] args) {
-        final int N = 32;
-        final int DROPS = 5000000;
+        final int N = 64;
+        final int DROPS = 500000;
         final long SEED = 42L;
 
         Sandpile sp = new Sandpile(N, SEED);
@@ -171,7 +171,7 @@ public class SandpileSimulation {
         System.out.printf("Zero-size avalanches: %d (%.2f%%)%n",
             zeros, 100.0 * zeros / Math.max(1, st.count));
 
-        sp.print(32);
+        //sp.print(64);
 
         System.out.println("Hello, sand pile!");
     }
