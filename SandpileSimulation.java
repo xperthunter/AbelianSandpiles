@@ -150,9 +150,13 @@ public class SandpileSimulation {
     }
 
     public static void main(String[] args) {
+        // defaults
         final int N = 64;
         final int DROPS = 500000;
         final long SEED = 42L;
+
+        // help text
+
 
         Sandpile sp = new Sandpile(N, SEED);
 
