@@ -155,9 +155,6 @@ public class SandpileSimulation {
         final int DROPS = 500000;
         final long SEED = 42L;
 
-        // help text
-
-
         Sandpile sp = new Sandpile(N, SEED);
 
         System.out.println("Running sandpile with N=" + N + ", drops=" + DROPS + "...");
