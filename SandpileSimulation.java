@@ -36,6 +36,13 @@ public class SandpileSimulation {
             return copy;
         }
 
+        // Clear the grid to all zeros
+        public void reset() {
+            for (int i = 0; i < n; i++) {
+                java.util.Arrays.fill(z[i], 0);
+            }
+        }
+
         /**
          * drop one grain at a random cell and fully relax
          * @return avalance size = total number of toppling events
