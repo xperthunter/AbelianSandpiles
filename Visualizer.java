@@ -1,6 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.border.Border;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 public class Visualizer {
 
@@ -8,7 +11,7 @@ public class Visualizer {
         private final SandpileSimulation.Sandpile sp;
         private boolean showGrid = true;
         private final Color[] palette = new Color[] {
-            new Color(0, 0, 0),       // 0
+            new Color(0, 0, 0),        // 0
             new Color(255, 236, 203),  // 1
             new Color(255, 207, 121),  // 2
             new Color(255, 178, 38)    // 3
@@ -20,6 +23,27 @@ public class Visualizer {
             setBackground(Color.BLACK);
             setPreferredSize(new Dimension(256, 256));
             setDoubleBuffered(true);
+
+            Border blackborder = BorderFactory.createLineBorder(Color.black, 12);
+            setBorder(blackborder);
+
+            setLayout(new GridBagLayout());
+        }
+
+        @Override
+        public Dimension getPreferredSize() {
+            Container parent = getParent();
+            if (parent != null) {
+                int w = parent.getWidth();
+                int h = parent.getHeight();
+
+                if (w == 0 || h == 0) return new Dimension(256, 256);
+
+                int size = Math.min(w, h);
+
+                return new Dimension(size, size);
+            }
+            return new Dimension(256, 256);
         }
 
         public void setShowGrid(boolean show) {
@@ -38,30 +62,40 @@ public class Visualizer {
             int[][] grid = sp.snapshot();
             int n = grid.length;
 
-            int w = getWidth();
-            int h = getHeight();
-            int cellW = w / n;
-            int cellH = h / n;
+            Insets in = getInsets();
+            int x0 = in.left, y0 = in.top;
+
+            int w = getWidth() - in.left - in.right;
+            int h = getHeight() - in.top - in.bottom;
 
             Graphics2D g2 = (Graphics2D) g.create();
 
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+
+            double cellW = w / (double) n;
+            double cellH = h / (double) n;
+
             // Draw cells
             for (int r = 0; r < n; r++) {
+                double y = y0 + r * cellH;
                 for (int c = 0; c < n; c++) {
+                    double x = x0 + c * cellW;
                     int v = grid[r][c];
                     int idx = Math.max(0, Math.min(v, 3));
                     g2.setColor(palette[idx]);
-                    g2.fillRect(c * cellW, r * cellH, cellW, cellH);
+                    g2.fill(new java.awt.geom.Rectangle2D.Double(x, y, cellW, cellH));
                 }
             }
 
             if (showGrid && cellW >= 6 && cellH >= 6) {
                 g2.setColor(new Color(0,0,0,70));
                 for (int r = 0; r <= n; r++) {
-                    g2.drawLine(0, r * cellH, n * cellW, r * cellH);
+                    double yy = y0 + r * cellH;
+                    g2.draw(new java.awt.geom.Line2D.Double(x0, yy, x0 + w, yy));
                 }
                 for (int c = 0; c <= n; c++) {
-                    g2.drawLine(c * cellW, 0, c * cellW, n * cellH);
+                    double xx = x0 + c * cellW;
+                    g2.draw(new java.awt.geom.Line2D.Double(xx, y0, xx, y0+h));
                 }
             }
 
@@ -84,11 +118,20 @@ public class Visualizer {
 
         frame = new JFrame("Sandpile Visualization (Relaxation Only)");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new BorderLayout());
-        frame.add(panel, BorderLayout.CENTER);
+
+        frame.getContentPane().setLayout(new BorderLayout());
+
+        JPanel centerWrapper = new JPanel(new GridBagLayout());
+        centerWrapper.setBackground(Color.DARK_GRAY);
+
+        centerWrapper.add(panel, new GridBagConstraints());
+
+
+        frame.add(centerWrapper, BorderLayout.CENTER);
         frame.add(createControls(), BorderLayout.SOUTH);
+        frame.setSize(400, 400);
         frame.pack();
-        frame.setLocationByPlatform(true);
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
         updateStatus("Ready");
@@ -197,6 +240,6 @@ public class Visualizer {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Visualizer(8, 42));
+        SwingUtilities.invokeLater(() -> new Visualizer(32, 42));
     }
 }

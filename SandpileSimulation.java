@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class SandpileSimulation {
 
     public static class Sandpile {
-        private final int n;                    // grid size (n x n)
+        public final int n;                    // grid size (n x n)
         private final int [][] z;               // heights
         private final Random rng;
         private final int[] dr = {-1, 1, 0, 0}; // N, S, E, W
