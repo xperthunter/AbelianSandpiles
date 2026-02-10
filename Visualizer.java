@@ -240,6 +240,6 @@ public class Visualizer {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Visualizer(32, 42));
+        SwingUtilities.invokeLater(() -> new Visualizer(64, 42));
     }
 }
