@@ -14,18 +14,29 @@ import java.util.stream.Collectors;
 
 public class SandpileSimulation {
 
+    private final String start = "cold";
+    private final Random rng;
+
+
     public static class Sandpile {
         public final int n;                    // grid size (n x n)
-        private final int [][] z;               // heights
+        private final int [][] z;              // heights
+        private final String start = "cold";
         private final Random rng;
         private final int[] dr = {-1, 1, 0, 0}; // N, S, E, W
         private final int[] dc = {0, 0, 1, -1};
 
-        public Sandpile(int n, long seed) {
+        public Sandpile(int n, long seed, start) {
             if (n <= 0) throw new IllegalArgumentException("n must be positive");
             this.n = n;
             this.z = new int[n][n];
             this.rng = new Random(seed);
+
+            if (start != "hot" || "start" != "cold") {
+                throw new IllegalArgumentException("start must be [hot] or [cold]");
+            }
+
+            this.start = start;
         }
 
         public int size() {return n; }
@@ -42,11 +53,6 @@ public class SandpileSimulation {
                 java.util.Arrays.fill(z[i], 0);
             }
         }
-
-        /**
-         * drop one grain at a random cell and fully relax
-         * @return avalance size = total number of toppling events
-        */
 
         public int dropGrainAndRelax() {
             int r = rng.nextInt(n);
