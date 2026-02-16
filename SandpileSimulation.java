@@ -1,5 +1,8 @@
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
+
 
 /**
     * Abelian Sandpile Simulation (open boundary)
@@ -14,29 +17,50 @@ import java.util.stream.Collectors;
 
 public class SandpileSimulation {
 
-    private final String start = "cold";
-    private final Random rng;
+    /**
+        Class to simulate a sanpile.
+            * initializtion : how to initialize the pile
+                - `cold` (default) : every site initialized at 0
+                - `hot`            : every site initialized randomly [0,1,2,3,4]
+                - `unstable`       : every site initialized to 3
+            * rng  : Random number generator (RandomGenerator type)
+            * seed : seed for reproducibility
+    */
 
+    private final String start;
+    private final String rngMethod;
+    private final long seed;
+    public final RandomGenerator rng;
+
+    // default constructor
+    public SandpileSimulation() {
+        this("cold", "Random", 42L);
+    }
+
+    public SandpileSimulation(String start, String rngMethod, long seed) {
+        if (!start.equals("hot") && !start.equals("cold") && !start.equals("unstable")) {
+            throw new IllegalArgumentException("start must be [hot], [cold], or [unstable]");
+        }
+
+        this.start = start;
+        this.rngMethod = rngMethod;
+        this.seed  = seed;
+
+        this.rng = RandomGeneratorFactory.of(rngMethod).create(seed);
+    }
 
     public static class Sandpile {
-        public final int n;                    // grid size (n x n)
-        private final int [][] z;              // heights
-        private final String start = "cold";
-        private final Random rng;
+        public final int n;                     // grid size (n x n)
+        private final int [][] z;               // heights
         private final int[] dr = {-1, 1, 0, 0}; // N, S, E, W
         private final int[] dc = {0, 0, 1, -1};
+        RandomGenerator rng;
 
-        public Sandpile(int n, long seed, start) {
+        public Sandpile(int n, RandomGenerator rng) {
             if (n <= 0) throw new IllegalArgumentException("n must be positive");
             this.n = n;
             this.z = new int[n][n];
-            this.rng = new Random(seed);
-
-            if (start != "hot" || "start" != "cold") {
-                throw new IllegalArgumentException("start must be [hot] or [cold]");
-            }
-
-            this.start = start;
+            this.rng = rng;
         }
 
         public int size() {return n; }
@@ -51,6 +75,26 @@ public class SandpileSimulation {
         public void reset() {
             for (int i = 0; i < n; i++) {
                 java.util.Arrays.fill(z[i], 0);
+            }
+        }
+
+        public void coldStart() {
+            reset();
+        }
+
+        public void hotStart() {
+            int val;
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    val = rng.nextInt(4);
+                    z[i][j] = val;
+                }
+            }
+        }
+
+        public void unstableStart() {
+            for (int i = 0; i < n; i++) {
+                java.util.Arrays.fill(z[i], 3);
             }
         }
 
@@ -107,15 +151,6 @@ public class SandpileSimulation {
             return avalanceTopplings;
         }
 
-        public List<Integer> runDrops(int drops) {
-            ArrayList<Integer> sizes = new ArrayList<>(drops);
-            for (int t = 0; t < drops; t++) {
-                sizes.add(dropGrainAndRelax());
-            }
-            return sizes;
-        }
-
-        // pretty print a grid
         public void print(int maxSizeToPrint) {
             if (n > maxSizeToPrint) {
                 System.out.println("Grid too large to print; n=" + n);
@@ -133,6 +168,69 @@ public class SandpileSimulation {
         }
     }
 
+    private Sandpile sandpile;
+    public void makeSandpile (int n) {
+        this.sandpile = new Sandpile(n, this.rng);
+    }
+
+    public void initialize() {
+        if (start.equals("hot"))           { sandpile.hotStart(); }
+        else if (start.equals("cold"))     { sandpile.coldStart(); }
+        else if (start.equals("unstable")) { sandpile.unstableStart(); }
+        else {
+            throw new IllegalArgumentException("start must be [hot], [cold], or [unstable]");
+        }
+    }
+
+    public static void main(String[] args) {
+
+        SandpileSimulation newSim = new SandpileSimulation("hot", "Random", 42L);
+
+        System.out.println(newSim.seed);
+
+        newSim.makeSandpile(8);
+
+        newSim.initialize();
+
+        newSim.sandpile.print(8);
+
+
+
+
+
+
+
+        /**
+        // defaults
+        final int N = 64;
+        final int DROPS = 500000;
+        final long SEED = 42L;
+
+        Sandpile sp = new Sandpile(N, SEED);
+
+        System.out.println("Running sandpile with N=" + N + ", drops=" + DROPS + "...");
+        long t0 = System.nanoTime();
+        List<Integer> avalancheSizes = sp.runDrops(DROPS);
+        long t1 = System.nanoTime();
+
+        Stats st = new Stats(avalancheSizes);
+        System.out.printf(Locale.US, "Done in %.3f s%n", (t1-t0)/1e9);
+        System.out.printf("Avalance sizes: count=%d, min=%d, max=%d, mean=%.4f%n",
+            st.count, st.min, st.max, st.mean);
+
+        // fraction of zero avalanche  drops (no toppling)
+        long zeros = avalancheSizes.stream().filter(v -> v == 0).count();
+        System.out.printf("Zero-size avalanches: %d (%.2f%%)%n",
+            zeros, 100.0 * zeros / Math.max(1, st.count));
+
+        //sp.print(64);
+
+        System.out.println("Hello, sand pile!");
+        */
+    }
+}
+
+/**
     // simple statistics helper
     public static class Stats {
         public final long count;
@@ -162,77 +260,21 @@ public class SandpileSimulation {
         }
     }
 
-    public static void main(String[] args) {
-        // defaults
-        final int N = 64;
-        final int DROPS = 500000;
-        final long SEED = 42L;
-
-        Sandpile sp = new Sandpile(N, SEED);
-
-        System.out.println("Running sandpile with N=" + N + ", drops=" + DROPS + "...");
-        long t0 = System.nanoTime();
-        List<Integer> avalancheSizes = sp.runDrops(DROPS);
-        long t1 = System.nanoTime();
-
-        Stats st = new Stats(avalancheSizes);
-        System.out.printf(Locale.US, "Done in %.3f s%n", (t1-t0)/1e9);
-        System.out.printf("Avalance sizes: count=%d, min=%d, max=%d, mean=%.4f%n",
-            st.count, st.min, st.max, st.mean);
-
-        // fraction of zero avalanche  drops (no toppling)
-        long zeros = avalancheSizes.stream().filter(v -> v == 0).count();
-        System.out.printf("Zero-size avalanches: %d (%.2f%%)%n",
-            zeros, 100.0 * zeros / Math.max(1, st.count));
-
-        //sp.print(64);
-
-        System.out.println("Hello, sand pile!");
+        // pretty print a grid
+        public void print(int maxSizeToPrint) {
+            if (n > maxSizeToPrint) {
+                System.out.println("Grid too large to print; n=" + n);
+                return;
+            }
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    System.out.print(z[i][j]);
+                    if (j < n - 1) {
+                        System.out.print(" ");
+                    }
+                }
+                System.out.println();
+            }
+        }
     }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/**
-random number generator variations
-Variation: For better statistical quality and concurrency, many modern Java programs use java.util.random.RandomGenerator implementations (e.g., SplittableRandom, Xoroshiro/Xoshiro via 3rd‑party libs) or ThreadLocalRandom when you don’t need reproducible seeding. For your learning project, Random(seed) is perfect.
 */
