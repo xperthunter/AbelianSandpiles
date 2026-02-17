@@ -182,17 +182,57 @@ public class SandpileSimulation {
         }
     }
 
+    public void burnin(int drops) {
+        for (int i = 0; i < drops; i++) {
+            this.sandpile.dropGrainAndRelax();
+        }
+    }
+
+    public int[] runDrops(int drops) {
+        int[] steps = new int[drops];
+        for (int i = 0; i< drops; i++) {
+            steps[i] = this.sandpile.dropGrainAndRelax();
+        }
+
+        return steps;
+    }
+
+    public void equilibrate(double tol, int m) {
+        int[] windowDrops = runDrops(m);
+        double prevZeroFreq;
+        long zeros = 0L;
+
+        zeros = windowDrops.stream().filter(v -> v == 0).count();
+        prevZeroFreq = (double) zeros / m;
+
+        double diff = Double.MAX_VALUE;
+        while (diff > tol) {
+            windowDrops = runDrops(m);
+            double currZeroFreq;
+            zeros = zeros = windowDrops.stream().filter(v -> v == 0).count();
+
+            currZeroFreq = (double) zeros / m;
+            diff = currZeroFreq - prevZeroFreq;
+            diff = Math.abs(diff);
+            prevZeroFreq = currZeroFreq;
+        }
+    }
+
     public static void main(String[] args) {
 
-        SandpileSimulation newSim = new SandpileSimulation("hot", "Random", 42L);
+        SandpileSimulation newSim = new SandpileSimulation("unstable", "Random", 42L);
 
         System.out.println(newSim.seed);
 
-        newSim.makeSandpile(8);
+        newSim.makeSandpile(256);
 
         newSim.initialize();
 
-        newSim.sandpile.print(8);
+        //newSim.sandpile.print(8);
+
+        newSim.burnin(1000);
+
+        newSim.equilibrate(0.001, 10000);
 
 
 
