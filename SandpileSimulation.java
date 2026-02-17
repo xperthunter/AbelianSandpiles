@@ -202,14 +202,14 @@ public class SandpileSimulation {
         double prevZeroFreq;
         long zeros = 0L;
 
-        zeros = windowDrops.stream().filter(v -> v == 0).count();
+        zeros = Arrays.stream(windowDrops).filter(v -> v == 0).count();
         prevZeroFreq = (double) zeros / m;
 
         double diff = Double.MAX_VALUE;
         while (diff > tol) {
             windowDrops = runDrops(m);
             double currZeroFreq;
-            zeros = zeros = windowDrops.stream().filter(v -> v == 0).count();
+            zeros = Arrays.stream(windowDrops).filter(v -> v == 0).count();
 
             currZeroFreq = (double) zeros / m;
             diff = currZeroFreq - prevZeroFreq;
