@@ -224,7 +224,7 @@ public class SandpileSimulation {
 
         System.out.println(newSim.seed);
 
-        newSim.makeSandpile(256);
+        newSim.makeSandpile(25);
 
         newSim.initialize();
 
@@ -232,9 +232,9 @@ public class SandpileSimulation {
 
         newSim.burnin(1000);
 
-        newSim.equilibrate(0.001, 10000);
-
-
+        newSim.equilibrate(0.0001, 10000);
+    }
+}
 
 
 
@@ -267,8 +267,6 @@ public class SandpileSimulation {
 
         System.out.println("Hello, sand pile!");
         */
-    }
-}
 
 /**
     // simple statistics helper
