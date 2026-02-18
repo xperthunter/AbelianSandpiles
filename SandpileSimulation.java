@@ -30,13 +30,15 @@ public class SandpileSimulation {
     private final String start;
     private final String rngMethod;
     private final long seed;
-    public final RandomGenerator rng;
+    public final RandomGenerator rng; // RandomGenerator can handle any type of generator
+    								  // generator gets passed in by name
 
     // default constructor
     public SandpileSimulation() {
         this("cold", "Random", 42L);
     }
 
+    // constructor with args
     public SandpileSimulation(String start, String rngMethod, long seed) {
         if (!start.equals("hot") && !start.equals("cold") && !start.equals("unstable")) {
             throw new IllegalArgumentException("start must be [hot], [cold], or [unstable]");
@@ -49,6 +51,7 @@ public class SandpileSimulation {
         this.rng = RandomGeneratorFactory.of(rngMethod).create(seed);
     }
 
+    // sandpile class -- contains methods that alter the sandpile state
     public static class Sandpile {
         public final int n;                     // grid size (n x n)
         private final int [][] z;               // heights
@@ -56,13 +59,14 @@ public class SandpileSimulation {
         private final int[] dc = {0, 0, 1, -1};
         RandomGenerator rng;
 
+        // constructor
         public Sandpile(int n, RandomGenerator rng) {
             if (n <= 0) throw new IllegalArgumentException("n must be positive");
             this.n = n;
             this.z = new int[n][n];
             this.rng = rng;
         }
-
+        
         public int size() {return n; }
 
         public int[][] snapshot() {
@@ -70,18 +74,19 @@ public class SandpileSimulation {
             for (int i = 0; i < n; i++) System.arraycopy(z[i], 0, copy[i], 0, n);
             return copy;
         }
-
-        // Clear the grid to all zeros
+        
         public void reset() {
             for (int i = 0; i < n; i++) {
                 java.util.Arrays.fill(z[i], 0);
             }
         }
 
+        // grid set to all zeros
         public void coldStart() {
             reset();
         }
-
+		
+		// cells set to 0,1,2,3 randomly (uniformly)
         public void hotStart() {
             int val;
             for (int i = 0; i < n; i++) {
@@ -91,30 +96,31 @@ public class SandpileSimulation {
                 }
             }
         }
-
+        
+        // every cell set to 3
         public void unstableStart() {
             for (int i = 0; i < n; i++) {
                 java.util.Arrays.fill(z[i], 3);
             }
         }
-
+        
         public int dropGrainAndRelax() {
             int r = rng.nextInt(n);
             int c = rng.nextInt(n);
             z[r][c]++;
-
+            
             // if no instability, no avalance
             if (z[r][c] < 4) return 0;
-
+            
             // efficient relaxation with a queue
             // process only unstable site
             // avoid recursion to prevent stack overflows
-
+            
             ArrayDeque<int[]> q = new ArrayDeque<>();
             boolean[][] inQueue = new boolean[n][n];
             q.add(new int[]{r,c});
             inQueue[r][c] = true;
-
+            
             int avalanceTopplings = 0;
 
             while(!q.isEmpty()) {
@@ -151,6 +157,7 @@ public class SandpileSimulation {
             return avalanceTopplings;
         }
 
+        // fix this -- printing is not quite right
         public void print(int maxSizeToPrint) {
             if (n > maxSizeToPrint) {
                 System.out.println("Grid too large to print; n=" + n);
@@ -167,12 +174,14 @@ public class SandpileSimulation {
             }
         }
     }
-
+    
+    // make a sandpile in the simulation
     private Sandpile sandpile;
     public void makeSandpile (int n) {
         this.sandpile = new Sandpile(n, this.rng);
     }
 
+    // initialize the sandpile
     public void initialize() {
         if (start.equals("hot"))           { sandpile.hotStart(); }
         else if (start.equals("cold"))     { sandpile.coldStart(); }
@@ -182,12 +191,15 @@ public class SandpileSimulation {
         }
     }
 
+    // burn-in, throw some user defined number of grains
+    // no avalanche recording
     public void burnin(int drops) {
         for (int i = 0; i < drops; i++) {
             this.sandpile.dropGrainAndRelax();
         }
     }
-
+    
+    // class method to simulate the grid and record avalanche sizes
     public int[] runDrops(int drops) {
         int[] steps = new int[drops];
         for (int i = 0; i< drops; i++) {
@@ -196,7 +208,8 @@ public class SandpileSimulation {
 
         return steps;
     }
-
+    
+    // equilibrate the sandpile to reach a critical state
     public void equilibrate(double tol, int m) {
         int[] windowDrops = runDrops(m);
         double prevZeroFreq;
@@ -218,21 +231,15 @@ public class SandpileSimulation {
         }
     }
 
+    // run the simulation
     public static void main(String[] args) {
-
         SandpileSimulation newSim = new SandpileSimulation("unstable", "Random", 42L);
-
-        System.out.println(newSim.seed);
-
+        
         newSim.makeSandpile(25);
-
         newSim.initialize();
-
-        //newSim.sandpile.print(8);
-
         newSim.burnin(1000);
-
         newSim.equilibrate(0.0001, 10000);
+        // start to record 
     }
 }
 
@@ -240,79 +247,79 @@ public class SandpileSimulation {
 
 
 
-        /**
-        // defaults
-        final int N = 64;
-        final int DROPS = 500000;
-        final long SEED = 42L;
+/**
+// defaults
+final int N = 64;
+final int DROPS = 500000;
+final long SEED = 42L;
 
-        Sandpile sp = new Sandpile(N, SEED);
+Sandpile sp = new Sandpile(N, SEED);
 
-        System.out.println("Running sandpile with N=" + N + ", drops=" + DROPS + "...");
-        long t0 = System.nanoTime();
-        List<Integer> avalancheSizes = sp.runDrops(DROPS);
-        long t1 = System.nanoTime();
+System.out.println("Running sandpile with N=" + N + ", drops=" + DROPS + "...");
+long t0 = System.nanoTime();
+List<Integer> avalancheSizes = sp.runDrops(DROPS);
+long t1 = System.nanoTime();
 
-        Stats st = new Stats(avalancheSizes);
-        System.out.printf(Locale.US, "Done in %.3f s%n", (t1-t0)/1e9);
-        System.out.printf("Avalance sizes: count=%d, min=%d, max=%d, mean=%.4f%n",
-            st.count, st.min, st.max, st.mean);
+Stats st = new Stats(avalancheSizes);
+System.out.printf(Locale.US, "Done in %.3f s%n", (t1-t0)/1e9);
+System.out.printf("Avalance sizes: count=%d, min=%d, max=%d, mean=%.4f%n",
+	st.count, st.min, st.max, st.mean);
 
-        // fraction of zero avalanche  drops (no toppling)
-        long zeros = avalancheSizes.stream().filter(v -> v == 0).count();
-        System.out.printf("Zero-size avalanches: %d (%.2f%%)%n",
-            zeros, 100.0 * zeros / Math.max(1, st.count));
+// fraction of zero avalanche  drops (no toppling)
+long zeros = avalancheSizes.stream().filter(v -> v == 0).count();
+System.out.printf("Zero-size avalanches: %d (%.2f%%)%n",
+	zeros, 100.0 * zeros / Math.max(1, st.count));
 
-        //sp.print(64);
+//sp.print(64);
 
-        System.out.println("Hello, sand pile!");
-        */
+System.out.println("Hello, sand pile!");
+*/
 
 /**
-    // simple statistics helper
-    public static class Stats {
-        public final long count;
-        public final long sum;
-        public final int min;
-        public final int max;
-        public final double mean;
+// simple statistics helper
+public static class Stats {
+	public final long count;
+	public final long sum;
+	public final int min;
+	public final int max;
+	public final double mean;
 
-        public Stats(List<Integer> data) {
-            if (data.isEmpty()) {
-                count = 0; sum = 0; min = 0; max = 0; mean = Double.NaN;
-                return;
-            }
-            long s = 0;
-            int mn = Integer.MAX_VALUE, mx = Integer.MIN_VALUE;
-            for (int v: data) {
-                s += v;
-                if (v < mn) mn = v;
-                if (v > mx) mx = v;
-            }
+	public Stats(List<Integer> data) {
+		if (data.isEmpty()) {
+			count = 0; sum = 0; min = 0; max = 0; mean = Double.NaN;
+			return;
+		}
+		long s = 0;
+		int mn = Integer.MAX_VALUE, mx = Integer.MIN_VALUE;
+		for (int v: data) {
+			s += v;
+			if (v < mn) mn = v;
+			if (v > mx) mx = v;
+		}
 
-            this.count = data.size();
-            this.sum = s;
-            this.min = mn;
-            this.max = mx;
-            this.mean = s / (double) count;
-        }
-    }
+		this.count = data.size();
+		this.sum = s;
+		this.min = mn;
+		this.max = mx;
+		this.mean = s / (double) count;
+	}
+}
 
-        // pretty print a grid
-        public void print(int maxSizeToPrint) {
-            if (n > maxSizeToPrint) {
-                System.out.println("Grid too large to print; n=" + n);
-                return;
-            }
-            for (int i = 0; i < n; i++) {
-                for (int j = 0; j < n; j++) {
-                    System.out.print(z[i][j]);
-                    if (j < n - 1) {
-                        System.out.print(" ");
-                    }
-                }
-                System.out.println();
-            }
-        }
-    }
+	// pretty print a grid
+	public void print(int maxSizeToPrint) {
+		if (n > maxSizeToPrint) {
+			System.out.println("Grid too large to print; n=" + n);
+			return;
+		}
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				System.out.print(z[i][j]);
+				if (j < n - 1) {
+					System.out.print(" ");
+				}
+			}
+			System.out.println();
+		}
+	}
+}
 */
