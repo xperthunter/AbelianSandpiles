@@ -53,9 +53,55 @@ public class SandpileStatistics {
         this.mean = sum / (double) count;
         this.freqs = freqs;
         this.counts = counts;
+
+        /**
+        counts.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .forEach(e -> System.out.println(e.getKey() + " = " + e.getValue()));
+        */
+
     }
 
-    public static HashMap<Integer, Double
+    HashMap<Integer, Integer> binnedData = new HashMap<Integer, Integer>();
+    HashMap<Double, Double> binnedFreqs = new HashMap<Double, Double>();
+    public void binData() {
+        double totalPseudo = (double) this.count - this.counts.get(0);
+        double maxSize = (double) this.max;
+        System.out.println(maxSize);
+
+        int maxExponent = (int) (Math.log(maxSize) / Math.log(2));
+        System.out.println(maxExponent);
+        //int pscounts = 0;
+        for (int i = 0; i <= maxExponent; i++ ) {
+            //pscounts = (int) Math.pow(2.0, (double) i);
+            //totalPseudo = totalPseudo + pscounts;
+            //System.out.printf("size: %d psuedo-counts: %d%n", i, pscounts);
+            binnedData.put(i, 0);
+            binnedFreqs.put((double) i, 0.0);
+        }
+
+        binnedData.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .forEach(e -> System.out.println(e.getKey() + " = " + e.getValue()));
+
+        double denominator;
+        for (int avs : counts.keySet()) {
+            if(avs == 0){ continue;}
+
+            int ex = (int) (Math.log((double) avs) / Math.log(2));
+            //System.out.println(ex);
+            //System.out.println(avs);
+
+            denominator = Math.pow(2.0, (double) ex + 0.5) * totalPseudo;
+
+            binnedData.put(ex, binnedData.get(ex) + counts.get(avs));
+            binnedFreqs.put((double) ex, ((double) binnedData.get(ex)) / denominator);
+        }
+
+        for (int ex : binnedData.keySet()) {
+            System.out.printf("log-size: %d count: %d%n", ex, binnedData.get(ex));
+        }
+    }
 
     /**
     public static float computeScalingExponent() {

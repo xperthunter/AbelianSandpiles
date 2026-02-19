@@ -270,13 +270,13 @@ public class SandpileSimulation {
     public static void main(String[] args) {
         SandpileSimulation newSim = new SandpileSimulation("unstable", "Random", 42L);
         
-        newSim.makeSandpile(16);
+        newSim.makeSandpile(100);
         newSim.initialize();
         newSim.burnin(1000);
-        newSim.equilibrate(0.01, 10000);
+        newSim.equilibrate(0.001, 10000);
 
         // record
-        int[] avalanches = newSim.record(200000000);
+        int[] avalanches = newSim.record(1000000);
 
         SandpileStatistics st = new SandpileStatistics(avalanches);
         System.out.printf("Avalance sizes: count=%d, min=%d, max=%d, mean=%.4f%n", st.count, st.min, st.max, st.mean);
@@ -284,6 +284,21 @@ public class SandpileSimulation {
         // fraction of zero avalanche  drops (no toppling)
         long zeros = Arrays.stream(avalanches).filter(v -> v == 0).count();
         System.out.printf("Zero-size avalanches: %d (%.2f%%)%n", zeros, 100.0 * zeros / Math.max(1, st.count));
+
+        st.binData();
+
+        st.binnedData.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .forEach(e -> System.out.println(e.getKey() + " = " + e.getValue()));
+
+        System.out.println();
+
+        st.binnedFreqs.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .forEach(e -> System.out.println(e.getKey() + " = " + e.getValue()));
+
+        System.exit(0);
+
 
         st.counts.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
