@@ -149,7 +149,6 @@ public class SandpileSimulation {
                     }
                     // else: grain escapess the system (open boundary)
                 }
-
                 // if (i,j) became unstable again due to future neighbor additions,
                 // it will get re-queued when that happens
             }
@@ -231,15 +230,64 @@ public class SandpileSimulation {
         }
     }
 
+    public int[] record(int samples) {
+        return runDrops(samples);
+    }
+
+    // build a Stats class helper
+    public static class Stats {
+        public final long count;
+        public final long sum;
+        public final int min;
+        public final int max;
+        public final double mean;
+
+        public Stats(int[] data) {
+            if (data == null || data.length == 0) {
+                count = 0; sum = 0; min = 0; max = 0; mean = Double.NaN;
+                return;
+            }
+
+            long s = 0;
+            int mn = Integer.MAX_VALUE, mx = Integer.MIN_VALUE;
+            for (int v: data) {
+                s += v;
+                if (v < mn) mn = v;
+                if (v > mx) mx = v;
+            }
+
+            this.count = data.length;
+            this.sum = s;
+            this.min = mn;
+            this.max = mx;
+            this.mean = s / (double) count;
+        }
+    }
+
+
+
     // run the simulation
     public static void main(String[] args) {
         SandpileSimulation newSim = new SandpileSimulation("unstable", "Random", 42L);
         
-        newSim.makeSandpile(25);
+        newSim.makeSandpile(16);
         newSim.initialize();
         newSim.burnin(1000);
-        newSim.equilibrate(0.0001, 10000);
-        // start to record 
+        newSim.equilibrate(0.01, 10000);
+
+        // record
+        int[] avalanches = newSim.record(200000000);
+
+        SandpileStatistics st = new SandpileStatistics(avalanches);
+        System.out.printf("Avalance sizes: count=%d, min=%d, max=%d, mean=%.4f%n", st.count, st.min, st.max, st.mean);
+
+        // fraction of zero avalanche  drops (no toppling)
+        long zeros = Arrays.stream(avalanches).filter(v -> v == 0).count();
+        System.out.printf("Zero-size avalanches: %d (%.2f%%)%n", zeros, 100.0 * zeros / Math.max(1, st.count));
+
+        st.counts.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .forEach(e -> System.out.println(e.getKey() + " = " + e.getValue()));
     }
 }
 
@@ -248,12 +296,6 @@ public class SandpileSimulation {
 
 
 /**
-// defaults
-final int N = 64;
-final int DROPS = 500000;
-final long SEED = 42L;
-
-Sandpile sp = new Sandpile(N, SEED);
 
 System.out.println("Running sandpile with N=" + N + ", drops=" + DROPS + "...");
 long t0 = System.nanoTime();
@@ -270,56 +312,4 @@ long zeros = avalancheSizes.stream().filter(v -> v == 0).count();
 System.out.printf("Zero-size avalanches: %d (%.2f%%)%n",
 	zeros, 100.0 * zeros / Math.max(1, st.count));
 
-//sp.print(64);
-
-System.out.println("Hello, sand pile!");
-*/
-
-/**
-// simple statistics helper
-public static class Stats {
-	public final long count;
-	public final long sum;
-	public final int min;
-	public final int max;
-	public final double mean;
-
-	public Stats(List<Integer> data) {
-		if (data.isEmpty()) {
-			count = 0; sum = 0; min = 0; max = 0; mean = Double.NaN;
-			return;
-		}
-		long s = 0;
-		int mn = Integer.MAX_VALUE, mx = Integer.MIN_VALUE;
-		for (int v: data) {
-			s += v;
-			if (v < mn) mn = v;
-			if (v > mx) mx = v;
-		}
-
-		this.count = data.size();
-		this.sum = s;
-		this.min = mn;
-		this.max = mx;
-		this.mean = s / (double) count;
-	}
-}
-
-	// pretty print a grid
-	public void print(int maxSizeToPrint) {
-		if (n > maxSizeToPrint) {
-			System.out.println("Grid too large to print; n=" + n);
-			return;
-		}
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-				System.out.print(z[i][j]);
-				if (j < n - 1) {
-					System.out.print(" ");
-				}
-			}
-			System.out.println();
-		}
-	}
-}
 */
