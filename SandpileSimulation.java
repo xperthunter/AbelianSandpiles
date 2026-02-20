@@ -270,10 +270,10 @@ public class SandpileSimulation {
     public static void main(String[] args) {
         SandpileSimulation newSim = new SandpileSimulation("unstable", "Random", 42L);
         
-        newSim.makeSandpile(100);
+        newSim.makeSandpile(256);
         newSim.initialize();
-        newSim.burnin(1000);
-        newSim.equilibrate(0.001, 10000);
+        newSim.burnin(10000);
+        newSim.equilibrate(0.001, 20000);
 
         // record
         int[] avalanches = newSim.record(1000000);
@@ -297,12 +297,11 @@ public class SandpileSimulation {
             .sorted(Map.Entry.comparingByKey())
             .forEach(e -> System.out.println(e.getKey() + " = " + e.getValue()));
 
+        double exp = st.computeScalingExponent();
+        System.out.printf("%n%f%n", exp);
+
+
         System.exit(0);
-
-
-        st.counts.entrySet().stream()
-            .sorted(Map.Entry.comparingByKey())
-            .forEach(e -> System.out.println(e.getKey() + " = " + e.getValue()));
     }
 }
 
