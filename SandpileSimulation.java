@@ -270,7 +270,7 @@ public class SandpileSimulation {
     public static void main(String[] args) {
         SandpileSimulation newSim = new SandpileSimulation("unstable", "Random", 42L);
         
-        newSim.makeSandpile(256);
+        newSim.makeSandpile(8);
         newSim.initialize();
         newSim.burnin(10000);
         newSim.equilibrate(0.001, 20000);
