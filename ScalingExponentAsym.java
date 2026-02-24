@@ -26,8 +26,8 @@ public class ScalingExponentAsym {
     }
 
     public static void main(String[] args) {
-        final int RESAMPLES = 1000;
-        int[] GridSizes = {10, 11, 12, 13, 14, 15, 16};
+        final int RESAMPLES = 1;
+        int[] GridSizes = {128, 256, 512};
         long sr;
         int[] avalanches;
         double[] expos = new double[RESAMPLES];
@@ -38,16 +38,16 @@ public class ScalingExponentAsym {
         for (int n : GridSizes ){
             for (int i = 0; i < RESAMPLES; i++){
                 sr = seed.nextLong();
-                SandpileSimulation sim = new SandpileSimulation("hot", "L64X128MixRandom", sr);
-
+                FasterAbel sim = new FasterAbel("hot", "SplittableRandom", sr);
+                
                 sim.makeSandpile(n);
                 sim.initialize();
-                sim.burnin(10000);
+                sim.burnin(1000);
                 sim.equilibrate(0.001, 10000);
 
                 // record
                 avalanches = sim.record(1000000);
-
+                
                 // statistics
                 SandpileStatistics st = new SandpileStatistics(avalanches);
 
