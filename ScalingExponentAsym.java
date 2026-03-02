@@ -26,8 +26,8 @@ public class ScalingExponentAsym {
     }
 
     public static void main(String[] args) {
-        final int RESAMPLES = 1;
-        int[] GridSizes = {128, 256, 512};
+        final int RESAMPLES = 5;
+        int[] GridSizes = {10, 11, 12, 13, 14, 15};
         long sr;
         int[] avalanches;
         double[] expos = new double[RESAMPLES];

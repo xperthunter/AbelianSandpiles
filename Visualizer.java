@@ -4,6 +4,8 @@ import java.awt.event.*;
 import javax.swing.border.Border;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.random.RandomGenerator;
+import java.util.random.RandomGeneratorFactory;
 
 public class Visualizer {
 
@@ -106,6 +108,7 @@ public class Visualizer {
     // -------- Main Visualizer Controls --------
     private JFrame frame;
     private SandpileSimulation.Sandpile sandpile;
+    private RandomGenerator rng;
     private SandpilePanel panel;
     private JLabel statusLabel;
 
@@ -113,7 +116,8 @@ public class Visualizer {
     private JSlider speedSlider;
 
     public Visualizer(int n, long seed) {
-        sandpile = new SandpileSimulation.Sandpile(n, seed);
+        rng = RandomGeneratorFactory.of("Random").create(seed);
+        sandpile = new SandpileSimulation.Sandpile(n, rng);
         panel = new SandpilePanel(sandpile);
 
         frame = new JFrame("Sandpile Visualization (Relaxation Only)");
@@ -240,6 +244,6 @@ public class Visualizer {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new Visualizer(64, 42));
+        SwingUtilities.invokeLater(() -> new Visualizer(32, 42L));
     }
 }
