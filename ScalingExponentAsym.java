@@ -26,8 +26,8 @@ public class ScalingExponentAsym {
     }
 
     public static void main(String[] args) {
-        final int RESAMPLES = 5;
-        int[] GridSizes = {10, 11, 12, 13, 14, 15};
+        final int RESAMPLES = 100;
+        int[] GridSizes = {10, 11, 12, 13, 14, 15, 16, 17};
         long sr;
         int[] avalanches;
         double[] expos = new double[RESAMPLES];
@@ -46,7 +46,7 @@ public class ScalingExponentAsym {
                 sim.equilibrate(0.001, 10000);
 
                 // record
-                avalanches = sim.record(1000000);
+                avalanches = sim.record(2000000);
                 
                 // statistics
                 SandpileStatistics st = new SandpileStatistics(avalanches);
